@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { LoginForm } from './LoginForm';
 import { Task } from './Task';
 import { TaskForm } from './TaskForm';
-import Tasks from '/imports/api/tasks';
+import { Tasks } from '/imports/api/tasks';
 import _ from 'lodash';
 import { useTracker } from 'meteor/react-meteor-data';
 
@@ -18,19 +18,16 @@ export const App = () => {
 
   const { tasks, incompleteTasksCount, user } = useTracker(() => ({
     tasks: Tasks.find(filter, { sort: { createdAt: -1 } }).fetch(),
-    incompleteTasksCount: Tasks.find({ checked: { $ne: true } }).count(),
+    incompleteTasksCount: Tasks.find({ isChecked: { $ne: true } }).count(),
     user: Meteor.user(),
   }));
+  console.log(tasks);
 
   const toggleChecked = ({ _id, isChecked }) => {
-    Tasks.update(_id, {
-      $set: {
-        isChecked: !isChecked,
-      },
-    });
+    Meteor.call('tasks.setChecked', _id, !isChecked);
   };
 
-  const deleteTask = ({ _id }) => Tasks.remove(_id);
+  const deleteTask = ({ _id }) => Meteor.call('tasks.remove', _id);
 
   if (!user) {
     return (

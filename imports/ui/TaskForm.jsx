@@ -9,11 +9,7 @@ export const TaskForm = ({ user }) => {
     e.preventDefault();
     if (!text) return;
 
-    Tasks.insert({
-      text: text.trim(),
-      createdAt: new Date(),
-      owner: user._id,
-    });
+    Meteor.call('tasks.insert', text);
 
     setText('');
   };
