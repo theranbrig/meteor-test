@@ -16,18 +16,25 @@ export const App = () => {
     _.set(filter, 'checked', false);
   }
 
-  const { tasks, incompleteTasksCount, user } = useTracker(() => ({
-    tasks: Tasks.find(filter, { sort: { createdAt: -1 } }).fetch(),
-    incompleteTasksCount: Tasks.find({ isChecked: { $ne: true } }).count(),
-    user: Meteor.user(),
-  }));
-  console.log(tasks);
+  const { tasks, incompleteTasksCount, user } = useTracker(() => {
+    Meteor.subscribe('tasks');
+
+    return {
+      tasks: Tasks.find(filter, { sort: { createdAt: -1 } }).fetch(),
+      incompleteTasksCount: Tasks.find({ checked: { $ne: true } }).count(),
+      user: Meteor.user(),
+    };
+  });
 
   const toggleChecked = ({ _id, isChecked }) => {
     Meteor.call('tasks.setChecked', _id, !isChecked);
   };
 
   const deleteTask = ({ _id }) => Meteor.call('tasks.remove', _id);
+
+  const togglePrivate = ({ _id, isPrivate }) => {
+    Meteor.call('tasks.setPrivate', _id, !isPrivate);
+  };
 
   if (!user) {
     return (
@@ -59,6 +66,7 @@ export const App = () => {
             task={task}
             onCheckboxClick={toggleChecked}
             onDeleteClick={deleteTask}
+            onTogglePrivateClick={togglePrivate}
           />
         ))}
       </ul>

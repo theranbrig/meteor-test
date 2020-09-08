@@ -22,7 +22,9 @@ Meteor.methods({
   'tasks.remove'(taskId) {
     check(taskId, String);
 
-    if (!this.userId) {
+    const task = Tasks.findOne(taskId);
+
+    if (!this.userId || task.owner !== this.userId) {
       throw new Meteor.Error('Not authorized.');
     }
 
@@ -33,7 +35,9 @@ Meteor.methods({
     check(taskId, String);
     check(isChecked, Boolean);
 
-    if (!this.userId) {
+    const task = Tasks.findOne(taskId);
+
+    if (task.isPrivate && task.owner !== this.userId) {
       throw new Meteor.Error('Not authorized.');
     }
 
@@ -43,4 +47,28 @@ Meteor.methods({
       },
     });
   },
+  'tasks.setPrivate'(taskId, isPrivate) {
+    check(taskId, String);
+    check(isPrivate, Boolean);
+
+    const task = Tasks.findOne(taskId);
+
+    if (task.isPrivate && task.owner !== this.userId) {
+      throw new Meteor.Error('Not authorized.');
+    }
+
+    Tasks.update(taskId, {
+      $set: {
+        isPrivate,
+      },
+    });
+  },
 });
+
+if (Meteor.isServer) {
+  Meteor.publish('tasks', function () {
+    return Tasks.find({
+      $or: [{ private: { $ne: true } }, { owner: this.userId }],
+    });
+  });
+}
